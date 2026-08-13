@@ -15,9 +15,10 @@ TARGET_COLUMN = "gross income"
 
 def load_model():
     if not MODEL_PATH.exists():
-        from src.train import train_model
-
-        train_model()
+        raise FileNotFoundError(
+            f"Model artifact not found at {MODEL_PATH}. "
+            "Run the training build step before starting the API."
+        )
     return joblib.load(MODEL_PATH)
 
 

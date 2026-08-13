@@ -4,7 +4,7 @@
 
 - Confirm the default branch is healthy and contains the latest tested changes.
 - Confirm Python runtime version in platform settings matches local runtime target.
-- Install dependencies from requirements.txt for the stable Streamlit + Flask path.
+- Install dependencies from requirements.txt and generate the model during the backend build.
 
 ## 2. Service Layout
 
@@ -38,11 +38,19 @@ Important:
 
 ## 4. Start Commands
 
-Backend (Flask):
+Backend build command:
+
+```bash
+pip install -r requirements.txt && python -m src.train --input-path data/processed/processed.csv
+```
+
+Backend start command (Flask):
 
 ```bash
 python app.py
 ```
+
+The model is generated during the Render build. Do not rely on training during API startup.
 
 Frontend (Streamlit):
 
