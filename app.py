@@ -93,6 +93,10 @@ def health():
 @app.route("/predict", methods=["POST"])
 def predict():
     payload = request.get_json(silent=True)
+
+    if not isinstance(payload, dict):
+        return jsonify({"error": "Request body must be a JSON object"}), 400
+
     try:
         return jsonify(predict_from_payload(payload))
     except ValueError as exc:
