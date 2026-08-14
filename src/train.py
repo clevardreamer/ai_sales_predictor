@@ -3,6 +3,7 @@ import argparse
 import datetime
 import json
 import subprocess
+from os import PathLike
 from pathlib import Path
 
 import joblib
@@ -16,6 +17,15 @@ from sklearn.pipeline import Pipeline
 from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 from src.config import BEST_MODEL_PATH, FIGURES_DIR, MODELS_DIR, PREPROCESSOR_PATH, RANDOM_STATE
+
+TARGET_LEAKAGE_COLUMNS = {
+    "Invoice ID",
+    "Tax 5%",
+    "Sales",
+    "cogs",
+    "gross margin percentage",
+    "Rating",
+}
 
 
 def detect_feature_types(df, target):
@@ -83,7 +93,7 @@ def save_artifacts(preprocessor, pipeline, metrics, best_params, output_dir, mod
     joblib.dump(pipeline, model_path)
 
     metadata = {
-        "timestamp_utc": datetime.datetime.utcnow().isoformat(),
+        "timestamp_utc": datetime.datetime.now(datetime.UTC).isoformat(),
         "random_state": RANDOM_STATE,
         "best_params": best_params,
         "git_commit": get_git_commit(),
@@ -95,23 +105,24 @@ def save_artifacts(preprocessor, pipeline, metrics, best_params, output_dir, mod
 
 
 def train_model(
-    input_path="data/processed/processed.csv",
-    output_dir="outputs",
-    model_path=BEST_MODEL_PATH,
-    preprocessor_path=PREPROCESSOR_PATH,
-    target="gross income",
-    test_size=0.2,
-    grid=False,
-    cv=3,
-):
+    input_path: str | PathLike[str] = "data/processed/processed.csv",
+    output_dir: str | PathLike[str] = "outputs",
+    model_path: str | PathLike[str] = BEST_MODEL_PATH,
+    preprocessor_path: str | PathLike[str] = PREPROCESSOR_PATH,
+    target: str = "gross income",
+    test_size: float = 0.2,
+    grid: bool = False,
+    cv: int = 3,
+) -> dict[str, float]:
     df = pd.read_csv(input_path)
     if target not in df.columns:
         raise KeyError(f"Target column '{target}' not found. Available columns: {list(df.columns)}")
 
-    X = df.drop(columns=[target]).fillna(0)
+    X = df.drop(columns=[target, *TARGET_LEAKAGE_COLUMNS], errors="ignore").fillna(0)
     y = df[target]
 
-    numeric_cols, categorical_cols = detect_feature_types(df, target)
+    numeric_cols = X.select_dtypes(include=["number"]).columns.tolist()
+    categorical_cols = X.select_dtypes(include=["object", "string", "category", "bool"]).columns.tolist()
     preprocessor = build_preprocessor(numeric_cols, categorical_cols)
 
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size, random_state=RANDOM_STATE)
@@ -171,6 +182,9 @@ def train_model(
             best_metrics = metrics
             best_predictions = predictions
             best_params = params
+
+    if best_pipeline is None or best_metrics is None or best_predictions is None:
+        raise RuntimeError("No candidate model was trained")
 
     save_artifacts(
         preprocessor,

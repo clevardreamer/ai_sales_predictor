@@ -11,6 +11,14 @@ PROJECT_ROOT = Path(__file__).resolve().parent
 MODEL_PATH = PROJECT_ROOT / "models" / "best_model.joblib"
 PROCESSED_DATA_PATH = PROJECT_ROOT / "data" / "processed" / "processed.csv"
 TARGET_COLUMN = "gross income"
+TARGET_LEAKAGE_COLUMNS = {
+    "Invoice ID",
+    "Tax 5%",
+    "Sales",
+    "cogs",
+    "gross margin percentage",
+    "Rating",
+}
 
 
 def load_model():
@@ -27,7 +35,11 @@ def load_feature_columns():
         raise FileNotFoundError(f"Processed dataset not found at {PROCESSED_DATA_PATH}")
 
     df = pd.read_csv(PROCESSED_DATA_PATH)
-    return [column for column in df.columns if column != TARGET_COLUMN]
+    return [
+        column
+        for column in df.columns
+        if column != TARGET_COLUMN and column not in TARGET_LEAKAGE_COLUMNS
+    ]
 
 
 model = load_model()
@@ -63,17 +75,8 @@ def predict_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
             values[column] = "2019-01-05"
         elif column == "Time":
             values[column] = "1:08:00 PM"
-        elif column in {"Tax 5%", "cogs", "gross margin percentage", "Sales", "Rating"}:
-            values[column] = 0.0
         else:
             values[column] = "Unknown"
-
-    if "Unit price" in values and "Quantity" in values:
-        values["Tax 5%"] = float(values["Unit price"]) * float(values["Quantity"]) * 0.05
-        values["cogs"] = float(values["Unit price"]) * float(values["Quantity"])
-        values["gross margin percentage"] = 4.761905
-        values["Sales"] = float(values["Tax 5%"] + values["cogs"])
-        values["Rating"] = 8.0
 
     df = pd.DataFrame([values], columns=FEATURE_COLUMNS)
     prediction = model.predict(df)
