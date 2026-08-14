@@ -21,3 +21,8 @@ venv/
 .ipynb_checkpoints/
 
 *.log
+
+# Generated model-training artifacts. The deployed Streamlit app uses only this model.
+models/*
+!models/best_model.joblib
+outputs/
