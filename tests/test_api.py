@@ -46,8 +46,26 @@ def test_predict_from_payload_converts_selected_currency():
     body = predict_from_payload(payload)
 
     assert body["currency"] == "USD"
-    assert body["base_currency"] == "USD"
+    assert body["model_unit"] == "DATASET_UNITS"
     assert isinstance(body["prediction"], float)
+
+
+def test_quantity_changes_prediction():
+    common = {
+        "Branch": "A",
+        "City": "Yangon",
+        "Customer type": "Member",
+        "Gender": "Female",
+        "Product line": "Health and beauty",
+        "Unit price": 74.69,
+        "Payment": "Ewallet",
+        "currency": "USD",
+    }
+
+    one_item = predict_from_payload({**common, "Quantity": 1})
+    seven_items = predict_from_payload({**common, "Quantity": 7})
+
+    assert one_item["prediction"] != seven_items["prediction"]
 
 
 def test_equivalent_currency_inputs_produce_equivalent_predictions():
@@ -66,7 +84,7 @@ def test_equivalent_currency_inputs_produce_equivalent_predictions():
     mmk_result = predict_from_payload(mmk_payload)
     usd_result = predict_from_payload(usd_payload)
 
-    assert usd_result["prediction"] == pytest.approx(mmk_result["prediction"] / 3500)
+    assert usd_result["prediction"] == pytest.approx(mmk_result["prediction"])
 
 
 @pytest.mark.parametrize("currency, rate", [("EUR", 0.92), ("GBP", 0.79)])
@@ -86,7 +104,7 @@ def test_new_currency_conversion_returns_selected_currency(currency, rate):
     body = predict_from_payload(payload)
 
     assert body["currency"] == currency
-    assert body["base_currency"] == "USD"
+    assert body["model_unit"] == "DATASET_UNITS"
     assert body["prediction"] > 0
 
 

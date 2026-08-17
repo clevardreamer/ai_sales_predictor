@@ -10,7 +10,7 @@ def load_predictor():
 st.set_page_config(page_title="Sales Prediction App", layout="wide")
 st.title("Sales Prediction App")
 st.write("Enter customer and product details to estimate the sales outcome.")
-st.caption("Predictions run locally in this Streamlit app.")
+st.caption("Predictions use the dataset's original numeric units. Currency is a display label because the source data does not declare a currency.")
 
 branch = st.selectbox("Branch", ["A", "B", "C"], index=None, placeholder="Select a branch")
 city = st.selectbox("City", ["Yangon", "Mandalay", "Naypyitaw"], index=None, placeholder="Select a city")
@@ -58,6 +58,6 @@ if st.button("Predict Sales"):
                 st.error("Prediction response does not contain 'prediction'.")
                 st.json(result)
             else:
-                st.success(f"Predicted Gross Income: {currency} {prediction:,.2f}")
+                st.success(f"Predicted Gross Income: {prediction:,.2f} dataset units ({currency} display label)")
         except Exception as exc:
             st.error(f"Prediction failed: {exc}")

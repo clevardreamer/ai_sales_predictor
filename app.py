@@ -6,7 +6,7 @@ import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
 
-from currency import BASE_CURRENCY, from_base_currency, normalize_currency, to_base_currency
+from currency import MODEL_UNIT, from_base_currency, normalize_currency, to_base_currency
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 MODEL_PATH = PROJECT_ROOT / "models" / "best_model.joblib"
@@ -80,15 +80,23 @@ def predict_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             values[column] = "Unknown"
 
-    if "Unit price" in values:
-        values["Unit price"] = to_base_currency(float(values["Unit price"]), currency)
+    for numeric_column in ("Unit price", "Quantity"):
+        try:
+            values[numeric_column] = float(values[numeric_column])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ValueError(f"{numeric_column} must be numeric") from exc
+
+    if values["Unit price"] < 0 or values["Quantity"] < 1:
+        raise ValueError("Unit price must be non-negative and Quantity must be at least 1")
+
+    values["Unit price"] = to_base_currency(values["Unit price"], currency)
 
     df = pd.DataFrame([values], columns=FEATURE_COLUMNS)
     prediction = model.predict(df)
     return {
         "prediction": from_base_currency(float(prediction[0]), currency),
         "currency": currency,
-        "base_currency": BASE_CURRENCY,
+        "model_unit": MODEL_UNIT,
     }
 
 
