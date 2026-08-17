@@ -6,6 +6,7 @@ import joblib
 import pandas as pd
 from flask import Flask, jsonify, request
 
+from currency import BASE_CURRENCY, from_base_currency, normalize_currency, to_base_currency
 
 PROJECT_ROOT = Path(__file__).resolve().parent
 MODEL_PATH = PROJECT_ROOT / "models" / "best_model.joblib"
@@ -57,6 +58,7 @@ def predict_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         raise ValueError("Request body must be a JSON object")
 
     normalized_payload = {normalize_key(str(key)): value for key, value in payload.items()}
+    currency = normalize_currency(payload.get("currency", normalized_payload.get("currency")))
 
     values: dict[str, Any] = {}
     for column in FEATURE_COLUMNS:
@@ -78,9 +80,16 @@ def predict_from_payload(payload: dict[str, Any]) -> dict[str, Any]:
         else:
             values[column] = "Unknown"
 
+    if "Unit price" in values:
+        values["Unit price"] = to_base_currency(float(values["Unit price"]), currency)
+
     df = pd.DataFrame([values], columns=FEATURE_COLUMNS)
     prediction = model.predict(df)
-    return {"prediction": float(prediction[0])}
+    return {
+        "prediction": from_base_currency(float(prediction[0]), currency),
+        "currency": currency,
+        "base_currency": BASE_CURRENCY,
+    }
 
 
 @app.route("/", methods=["GET"])

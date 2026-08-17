@@ -12,10 +12,10 @@ st.title("Sales Prediction App")
 st.write("Enter customer and product details to estimate the sales outcome.")
 st.caption("Predictions run locally in this Streamlit app.")
 
-branch = st.selectbox("Branch", ["A", "B", "C"], index=0)
-city = st.selectbox("City", ["Yangon", "Mandalay", "Naypyitaw"], index=0)
-customer_type = st.selectbox("Customer Type", ["Member", "Normal"], index=0)
-gender = st.selectbox("Gender", ["Male", "Female"], index=0)
+branch = st.selectbox("Branch", ["A", "B", "C"], index=None, placeholder="Select a branch")
+city = st.selectbox("City", ["Yangon", "Mandalay", "Naypyitaw"], index=None, placeholder="Select a city")
+customer_type = st.selectbox("Customer Type", ["Member", "Normal"], index=None, placeholder="Select customer type")
+gender = st.selectbox("Gender", ["Male", "Female"], index=None, placeholder="Select gender")
 product_line = st.selectbox(
     "Product Line",
     [
@@ -26,14 +26,16 @@ product_line = st.selectbox(
         "Food and beverages",
         "Fashion accessories",
     ],
-    index=0,
+    index=None,
+    placeholder="Select a product line",
 )
-unit_price = st.number_input("Unit Price", min_value=0.0, value=50.0, step=0.01)
-quantity = st.number_input("Quantity", min_value=1, value=5, step=1)
-payment = st.selectbox("Payment Method", ["Cash", "Credit card", "Ewallet"], index=0)
+unit_price = st.number_input("Unit Price", min_value=0.0, value=None, step=0.01, placeholder="Enter unit price")
+quantity = st.number_input("Quantity", min_value=1, value=None, step=1, placeholder="Enter quantity")
+payment = st.selectbox("Payment Method", ["Cash", "Credit card", "Ewallet"], index=None, placeholder="Select payment method")
+currency = st.selectbox("Currency", ["USD", "EUR", "GBP", "MMK", "NGN"], index=0)
 
 if st.button("Predict Sales"):
-    payload = {
+    fields = {
         "Branch": branch,
         "City": city,
         "Customer type": customer_type,
@@ -42,15 +44,20 @@ if st.button("Predict Sales"):
         "Unit price": unit_price,
         "Quantity": quantity,
         "Payment": payment,
+        "currency": currency,
     }
+    missing_fields = [name for name, value in fields.items() if value is None]
 
-    try:
-        result = load_predictor()(payload)
-        prediction = result.get("prediction")
-        if prediction is None:
-            st.error("Prediction response does not contain 'prediction'.")
-            st.json(result)
-        else:
-            st.success(f"Predicted Sales: {prediction}")
-    except Exception as exc:
-        st.error(f"Prediction failed: {exc}")
+    if missing_fields:
+        st.warning("Please complete all fields before predicting.")
+    else:
+        try:
+            result = load_predictor()(fields)
+            prediction = result.get("prediction")
+            if prediction is None:
+                st.error("Prediction response does not contain 'prediction'.")
+                st.json(result)
+            else:
+                st.success(f"Predicted Gross Income: {currency} {prediction:,.2f}")
+        except Exception as exc:
+            st.error(f"Prediction failed: {exc}")
