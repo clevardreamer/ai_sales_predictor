@@ -1,5 +1,6 @@
 MODEL_UNIT = "DATASET_UNITS"
-SUPPORTED_CURRENCIES = ("USD", "EUR", "GBP", "MMK", "NGN")
+DISPLAY_CURRENCY = "USD"
+SUPPORTED_CURRENCIES = (DISPLAY_CURRENCY,)
 
 
 def normalize_currency(currency: str | None) -> str:

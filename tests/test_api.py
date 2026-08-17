@@ -87,23 +87,22 @@ def test_equivalent_currency_inputs_produce_equivalent_predictions():
     assert usd_result["prediction"] == pytest.approx(mmk_result["prediction"])
 
 
-@pytest.mark.parametrize("currency, rate", [("EUR", 0.92), ("GBP", 0.79)])
-def test_new_currency_conversion_returns_selected_currency(currency, rate):
+def test_only_usd_display_currency_is_supported():
     payload = {
         "Branch": "A",
         "City": "Yangon",
         "Customer type": "Member",
         "Gender": "Female",
         "Product line": "Health and beauty",
-        "Unit price": 74.69 * rate,
+        "Unit price": 74.69,
         "Quantity": 7,
         "Payment": "Ewallet",
-        "currency": currency,
+        "currency": "USD",
     }
 
     body = predict_from_payload(payload)
 
-    assert body["currency"] == currency
+    assert body["currency"] == "USD"
     assert body["model_unit"] == "DATASET_UNITS"
     assert body["prediction"] > 0
 
