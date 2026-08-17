@@ -10,7 +10,7 @@ def load_predictor():
 st.set_page_config(page_title="Sales Prediction App", layout="wide")
 st.title("Sales Prediction App")
 st.write("Enter customer and product details to estimate the sales outcome.")
-st.caption("Predictions use the dataset's original numeric units. USD is a display label only; no currency conversion is applied.")
+st.caption("Predictions use the dataset's original numeric units. No currency conversion is applied.")
 
 branch = st.selectbox("Branch", ["A", "B", "C"], index=None, placeholder="Select a branch")
 city = st.selectbox("City", ["Yangon", "Mandalay", "Naypyitaw"], index=None, placeholder="Select a city")
@@ -32,8 +32,6 @@ product_line = st.selectbox(
 unit_price = st.number_input("Unit Price", min_value=0.0, value=None, step=0.01, placeholder="Enter unit price")
 quantity = st.number_input("Quantity", min_value=1, value=None, step=1, placeholder="Enter quantity")
 payment = st.selectbox("Payment Method", ["Cash", "Credit card", "Ewallet"], index=None, placeholder="Select payment method")
-currency = "USD"
-
 if st.button("Predict Sales"):
     fields = {
         "Branch": branch,
@@ -44,7 +42,6 @@ if st.button("Predict Sales"):
         "Unit price": unit_price,
         "Quantity": quantity,
         "Payment": payment,
-        "currency": currency,
     }
     missing_fields = [name for name, value in fields.items() if value is None]
 
@@ -58,6 +55,6 @@ if st.button("Predict Sales"):
                 st.error("Prediction response does not contain 'prediction'.")
                 st.json(result)
             else:
-                st.success(f"Predicted Gross Income: USD {prediction:,.2f} (display label only)")
+                st.success(f"Predicted Gross Income: USD {prediction:,.2f}")
         except Exception as exc:
             st.error(f"Prediction failed: {exc}")

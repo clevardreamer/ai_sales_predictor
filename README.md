@@ -4,9 +4,9 @@ This is a self-contained Streamlit app that predicts retail sales with a trained
 
 ## Currency Handling
 
-The model is trained on the dataset's original numeric scale. The source CSV does not declare a currency, so predictions are displayed with `USD` as a label only; no currency conversion is applied. Currency is not a model feature.
+The model is trained on the dataset's original numeric scale. The source CSV does not declare a currency, so predictions are returned as plain `DATASET_UNITS`. Currency is not a model feature and is not shown or converted.
 
-The displayed USD label must not be interpreted as verified dollar-denominated money until the source dataset currency is confirmed.
+Do not interpret the prediction as a verified dollar, euro, pound, naira, or kyat amount until the source dataset currency is confirmed.
 
 ## Run Locally
 
